@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'add_product_screen.dart';
 
 void main() {
   runApp(const ExpiryApp());
@@ -25,6 +26,20 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
+
+      // ✅ ADD BUTTON (IMPORTANT)
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddProductScreen(),
+            ),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
+
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -68,10 +83,11 @@ class HomeScreen extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("My Products",
-                            style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold)),
+                        Text(
+                          "My Products",
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
                         Text("Track expiry easily"),
                       ],
                     )
