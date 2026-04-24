@@ -10,17 +10,34 @@ class AddProductScreen extends StatefulWidget {
 
 class _AddProductScreenState extends State<AddProductScreen> {
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController categoryController = TextEditingController();
-  final TextEditingController dateController = TextEditingController();
+  String category = "Food";
+  DateTime? selectedDate;
 
-  void saveProduct() {
-    final product = Product(
-      name: nameController.text,
-      category: categoryController.text,
-      expiryDate: dateController.text,
+  void pickDate() async {
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
     );
 
-    Navigator.pop(context, product); // 🔥 send data back
+    if (picked != null) {
+      setState(() {
+        selectedDate = picked;
+      });
+    }
+  }
+
+  void saveProduct() {
+    if (nameController.text.isEmpty || selectedDate == null) return;
+
+    final product = Product(
+      name: nameController.text,
+      category: category,
+      expiryDate: selectedDate.toString().split(" ")[0],
+    );
+
+    Navigator.pop(context, product);
   }
 
   @override
@@ -36,24 +53,65 @@ class _AddProductScreenState extends State<AddProductScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextField(
-              controller: nameController,
-              decoration: inputStyle("Product Name"),
-            ),
+            inputField(nameController, "Product Name"),
+
             const SizedBox(height: 15),
-            TextField(
-              controller: categoryController,
-              decoration: inputStyle("Category"),
+
+            // Category Dropdown
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: DropdownButton<String>(
+                value: category,
+                dropdownColor: Colors.black,
+                isExpanded: true,
+                underline: const SizedBox(),
+                items: ["Food", "Medicine", "Cosmetics", "Other"]
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    category = value!;
+                  });
+                },
+              ),
             ),
+
             const SizedBox(height: 15),
-            TextField(
-              controller: dateController,
-              decoration: inputStyle("Expiry Date"),
+
+            // Date Picker
+            GestureDetector(
+              onTap: pickDate,
+              child: Container(
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.calendar_today),
+                    const SizedBox(width: 10),
+                    Text(selectedDate == null
+                        ? "Select Expiry Date"
+                        : selectedDate.toString().split(" ")[0]),
+                  ],
+                ),
+              ),
             ),
+
             const SizedBox(height: 25),
+
             ElevatedButton(
               onPressed: saveProduct,
-              child: const Text("Add Product"),
+              style: ElevatedButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+              ),
+              child: const Text("Save Product"),
             )
           ],
         ),
@@ -61,14 +119,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
   }
 
-  InputDecoration inputStyle(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      filled: true,
-      fillColor: Colors.white.withOpacity(0.1),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
-        borderSide: BorderSide.none,
+  Widget inputField(TextEditingController controller, String hint) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        hintText: hint,
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.08),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide.none,
+        ),
       ),
     );
   }
