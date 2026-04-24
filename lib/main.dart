@@ -80,9 +80,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          widget.isDark ? const Color(0xFF0F172A) : Colors.grey[200],
-
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final result = await Navigator.push(
@@ -99,109 +96,140 @@ class _HomeScreenState extends State<HomeScreen> {
         child: const Icon(Icons.add),
       ),
 
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              // 🔝 Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      // ✅ NEW BACKGROUND + OVERLAY STRUCTURE
+      body: Stack(
+        children: [
+          // 🌄 Background Image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/bg.jpg', // make sure this exists
+              fit: BoxFit.cover,
+            ),
+          ),
+
+          // 🌑 Overlay (changes with theme)
+          Positioned.fill(
+            child: Container(
+              color: widget.isDark
+                  ? Colors.black.withOpacity(0.65)
+                  : Colors.white.withOpacity(0.7),
+            ),
+          ),
+
+          // 📱 MAIN UI
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
                 children: [
-                  const Text("Expiry Tracker",
-                      style:
-                          TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                  IconButton(
-                    onPressed: widget.toggleTheme,
-                    icon: Icon(
-                        widget.isDark ? Icons.light_mode : Icons.dark_mode),
+                  // 🔝 Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text("Expiry Tracker",
+                          style: TextStyle(
+                              fontSize: 22, fontWeight: FontWeight.bold)),
+                      IconButton(
+                        onPressed: widget.toggleTheme,
+                        icon: Icon(widget.isDark
+                            ? Icons.light_mode
+                            : Icons.dark_mode),
+                      )
+                    ],
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  // 🔍 Search
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: TextField(
+                      controller: searchController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        hintText: "Search products...",
+                        hintStyle: TextStyle(color: Colors.white70),
+                        border: InputBorder.none,
+                        icon: Icon(Icons.search, color: Colors.white),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // 🎯 Info Card
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 400),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.inventory, size: 40),
+                        const SizedBox(width: 10),
+                        Text("${products.length} items tracked"),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // 📦 PRODUCT LIST
+                  Expanded(
+                    child: filteredProducts.isEmpty
+                        ? const Center(child: Text("No products found"))
+                        : ListView.builder(
+                            itemCount: filteredProducts.length,
+                            itemBuilder: (context, index) {
+                              final p = filteredProducts[index];
+
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                margin:
+                                    const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(15),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius:
+                                      BorderRadius.circular(15),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.inventory),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(p.name,
+                                              style: const TextStyle(
+                                                  fontWeight:
+                                                      FontWeight.bold)),
+                                          Text(
+                                              "${p.category} • ${p.expiryDate}"),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
                   )
                 ],
               ),
-
-              const SizedBox(height: 15),
-
-              // 🔍 Search
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: TextField(
-                  controller: searchController,
-                  decoration: const InputDecoration(
-                    hintText: "Search products...",
-                    border: InputBorder.none,
-                    icon: Icon(Icons.search),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // 🎯 Info Card
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 400),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.inventory, size: 40),
-                    const SizedBox(width: 10),
-                    Text("${products.length} items tracked"),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              Expanded(
-                child: filteredProducts.isEmpty
-                    ? const Center(child: Text("No products found"))
-                    : ListView.builder(
-                        itemCount: filteredProducts.length,
-                        itemBuilder: (context, index) {
-                          final p = filteredProducts[index];
-
-                          return AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(15),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.inventory),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(p.name,
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                      Text("${p.category} • ${p.expiryDate}"),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-              )
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
