@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'login_screen.dart';
 import 'add_product_screen.dart';
 import 'product.dart';
+import 'supabase_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://tdmvjfqurzbpfdvovali.supabase.co',
+    anonKey: 'sb_publishable_3969sn8jWgq1lEn25Y3qDQ_o9RnpB8y',
+  );
+
   runApp(const ExpiryApp());
 }
 
@@ -27,8 +38,16 @@ class _ExpiryAppState extends State<ExpiryApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Expiry Tracker',
-      theme: isDark ? ThemeData.dark() : ThemeData.light(),
-      home: HomeScreen(toggleTheme: toggleTheme, isDark: isDark),
+      theme: ThemeData(
+        brightness: isDark ? Brightness.dark : Brightness.light,
+        primarySwatch: Colors.deepPurple,
+      ),
+      home: Supabase.instance.client.auth.currentUser == null
+          ? const LoginScreen()
+          : HomeScreen(
+              toggleTheme: toggleTheme,
+              isDark: isDark,
+            ),
     );
   }
 }
@@ -37,33 +56,49 @@ class HomeScreen extends StatefulWidget {
   final VoidCallback toggleTheme;
   final bool isDark;
 
-  const HomeScreen(
-      {super.key, required this.toggleTheme, required this.isDark});
+  const HomeScreen({
+    super.key,
+    required this.toggleTheme,
+    required this.isDark,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final SupabaseService service = SupabaseService();
+
   List<Product> products = [];
   List<Product> filteredProducts = [];
-  TextEditingController searchController = TextEditingController();
+
+  final TextEditingController searchController =
+      TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    filteredProducts = products;
+
+    loadProducts();
 
     searchController.addListener(() {
       filterProducts();
     });
   }
 
-  void addProduct(Product product) {
+  Future<void> loadProducts() async {
+    final data = await service.fetchProducts();
+
     setState(() {
-      products.add(product);
-      filterProducts();
+      products = data;
+      filteredProducts = data;
     });
+  }
+
+  Future<void> addProduct(Product product) async {
+    await service.addProduct(product);
+
+    loadProducts();
   }
 
   void filterProducts() {
@@ -77,10 +112,25 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> logout() async {
+    await Supabase.instance.client.auth.signOut();
+
+    if (!mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LoginScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.deepPurple,
+        child: const Icon(Icons.add),
         onPressed: () async {
           final result = await Navigator.push(
             context,
@@ -93,129 +143,252 @@ class _HomeScreenState extends State<HomeScreen> {
             addProduct(result);
           }
         },
-        child: const Icon(Icons.add),
       ),
-
-      // ✅ NEW BACKGROUND + OVERLAY STRUCTURE
       body: Stack(
         children: [
           // 🌄 Background Image
           Positioned.fill(
             child: Image.asset(
-              'assets/images/bg.jpg', // make sure this exists
+              'assets/images/bg.jpg',
               fit: BoxFit.cover,
             ),
           ),
 
-          // 🌑 Overlay (changes with theme)
+          // 🌑 Overlay
           Positioned.fill(
             child: Container(
               color: widget.isDark
-                  ? Colors.black.withOpacity(0.65)
+                  ? Colors.black.withOpacity(0.7)
                   : Colors.white.withOpacity(0.7),
             ),
           ),
 
-          // 📱 MAIN UI
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  // 🔝 Header
+                  // 🔝 HEADER
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Expiry Tracker",
-                          style: TextStyle(
-                              fontSize: 22, fontWeight: FontWeight.bold)),
-                      IconButton(
-                        onPressed: widget.toggleTheme,
-                        icon: Icon(widget.isDark
-                            ? Icons.light_mode
-                            : Icons.dark_mode),
+                      const Text(
+                        "Expiry Tracker",
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: widget.toggleTheme,
+                            icon: Icon(
+                              widget.isDark
+                                  ? Icons.light_mode
+                                  : Icons.dark_mode,
+                            ),
+                          ),
+
+                          IconButton(
+                            onPressed: logout,
+                            icon: const Icon(Icons.logout),
+                          ),
+                        ],
                       )
                     ],
                   ),
 
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 20),
 
-                  // 🔍 Search
+                  // 🔍 SEARCH BAR
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 15),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(18),
                     ),
                     child: TextField(
                       controller: searchController,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        hintText: "Search products...",
-                        hintStyle: TextStyle(color: Colors.white70),
+                      style: TextStyle(
+                        color: widget.isDark
+                            ? Colors.white
+                            : Colors.black,
+                      ),
+                      decoration: InputDecoration(
                         border: InputBorder.none,
-                        icon: Icon(Icons.search, color: Colors.white),
+                        hintText: "Search products...",
+                        hintStyle: TextStyle(
+                          color: widget.isDark
+                              ? Colors.white70
+                              : Colors.black54,
+                        ),
+                        icon: Icon(
+                          Icons.search,
+                          color: widget.isDark
+                              ? Colors.white
+                              : Colors.black,
+                        ),
                       ),
                     ),
                   ),
 
                   const SizedBox(height: 20),
 
-                  // 🎯 Info Card
+                  // 📊 INFO CARD
                   AnimatedContainer(
-                    duration: const Duration(milliseconds: 400),
+                    duration:
+                        const Duration(milliseconds: 500),
+                    width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(25),
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+                        colors: [
+                          Color(0xFF7C3AED),
+                          Color(0xFF3B82F6),
+                        ],
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                              Colors.black.withOpacity(0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        )
+                      ],
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.inventory, size: 40),
-                        const SizedBox(width: 10),
-                        Text("${products.length} items tracked"),
+                        const Icon(
+                          Icons.inventory_2,
+                          size: 45,
+                          color: Colors.white,
+                        ),
+
+                        const SizedBox(width: 15),
+
+                        Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Tracked Products",
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.white70,
+                              ),
+                            ),
+
+                            Text(
+                              "${products.length}",
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        )
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 25),
 
                   // 📦 PRODUCT LIST
                   Expanded(
                     child: filteredProducts.isEmpty
-                        ? const Center(child: Text("No products found"))
+                        ? const Center(
+                            child: Text(
+                              "No products found",
+                              style: TextStyle(fontSize: 18),
+                            ),
+                          )
                         : ListView.builder(
-                            itemCount: filteredProducts.length,
+                            itemCount:
+                                filteredProducts.length,
                             itemBuilder: (context, index) {
-                              final p = filteredProducts[index];
+                              final p =
+                                  filteredProducts[index];
 
                               return AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
+                                duration:
+                                    const Duration(
+                                        milliseconds: 400),
                                 margin:
-                                    const EdgeInsets.only(bottom: 12),
-                                padding: const EdgeInsets.all(15),
+                                    const EdgeInsets.only(
+                                        bottom: 15),
+                                padding:
+                                    const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white
+                                      .withOpacity(0.18),
                                   borderRadius:
-                                      BorderRadius.circular(15),
+                                      BorderRadius.circular(
+                                          20),
+                                  border: Border.all(
+                                    color: Colors.white24,
+                                  ),
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.inventory),
-                                    const SizedBox(width: 10),
+                                    Container(
+                                      padding:
+                                          const EdgeInsets
+                                              .all(12),
+                                      decoration:
+                                          BoxDecoration(
+                                        color: Colors
+                                            .deepPurple
+                                            .withOpacity(0.3),
+                                        borderRadius: BorderRadius.circular(15),
+                                      ),
+                                      child: const Icon(
+                                        Icons.inventory,
+                                        size: 30,
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 15),
+
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                            CrossAxisAlignment
+                                                .start,
                                         children: [
-                                          Text(p.name,
-                                              style: const TextStyle(
-                                                  fontWeight:
-                                                      FontWeight.bold)),
                                           Text(
-                                              "${p.category} • ${p.expiryDate}"),
+                                            p.name,
+                                            style:
+                                                const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight:
+                                                  FontWeight
+                                                      .bold,
+                                            ),
+                                          ),
+
+                                          const SizedBox(
+                                              height: 5),
+
+                                          Text(
+                                            p.category,
+                                            style:
+                                                const TextStyle(
+                                              color: Colors
+                                                  .white70,
+                                            ),
+                                          ),
+
+                                          const SizedBox(
+                                              height: 5),
+
+                                          Text(
+                                            "Expiry: ${p.expiryDate}",
+                                          ),
                                         ],
                                       ),
                                     ),
