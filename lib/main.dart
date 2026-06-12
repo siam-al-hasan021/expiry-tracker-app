@@ -5,15 +5,17 @@ import 'login_screen.dart';
 import 'add_product_screen.dart';
 import 'product.dart';
 import 'supabase_service.dart';
+import 'notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
     url: 'https://tdmvjfqurzbpfdvovali.supabase.co',
-    anonKey:
-        'sb_publishable_3969sn8jWgq1lEn25Y3qDQ_o9RnpB8y',
+    anonKey: 'sb_publishable_3969sn8jWgq1lEn25Y3qDQ_o9RnpB8y',
   );
+
+  await NotificationService.initialize();
 
   runApp(const ExpiryApp());
 }
@@ -40,17 +42,15 @@ class _ExpiryAppState extends State<ExpiryApp> {
       debugShowCheckedModeBanner: false,
       title: 'Expiry Tracker',
       theme: ThemeData(
-        brightness:
-            isDark ? Brightness.dark : Brightness.light,
+        brightness: isDark ? Brightness.dark : Brightness.light,
         primarySwatch: Colors.deepPurple,
       ),
-      home:
-          Supabase.instance.client.auth.currentUser == null
-              ? const LoginScreen()
-              : HomeScreen(
-                  toggleTheme: toggleTheme,
-                  isDark: isDark,
-                ),
+      home: Supabase.instance.client.auth.currentUser == null
+          ? const LoginScreen()
+          : HomeScreen(
+              toggleTheme: toggleTheme,
+              isDark: isDark,
+            ),
     );
   }
 }
@@ -78,6 +78,57 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController searchController =
       TextEditingController();
 
+  Color getExpiryColor(String expiryDate) {
+    final expiry = DateTime.parse(expiryDate);
+    final today = DateTime.now();
+
+    final daysLeft = expiry.difference(today).inDays;
+
+    if (daysLeft < 0) {
+      return Colors.red;
+    } else if (daysLeft <= 7) {
+      return Colors.orange;
+    }
+
+    return Colors.green;
+  }
+
+  String getExpiryStatus(String expiryDate) {
+    final expiry = DateTime.parse(expiryDate);
+    final today = DateTime.now();
+
+    final daysLeft = expiry.difference(today).inDays;
+
+    if (daysLeft < 0) {
+      return "Expired";
+    } else if (daysLeft <= 7) {
+      return "$daysLeft day(s) left";
+    }
+
+    return "Safe";
+  }
+
+  Future<void> checkExpiryNotifications(
+      List<Product> products) async {
+    for (final product in products) {
+      final expiry =
+          DateTime.parse(product.expiryDate);
+
+      final daysLeft = expiry
+          .difference(DateTime.now())
+          .inDays;
+
+      if (daysLeft >= 0 &&
+          daysLeft <= 7) {
+        await NotificationService.showNotification(
+          title: 'Expiry Warning',
+          body:
+              '${product.name} expires in $daysLeft day(s)',
+        );
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -89,73 +140,95 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // ✅ LOAD PRODUCTS
   Future<void> loadProducts() async {
-    final data = await service.fetchProducts();
+    final data =
+        await service.fetchProducts();
 
     setState(() {
       products = data;
       filteredProducts = data;
     });
+
+    await checkExpiryNotifications(data);
   }
 
-  // ✅ ADD PRODUCT
-  Future<void> addProduct(Product product) async {
+  Future<void> addProduct(
+      Product product) async {
     await service.addProduct(product);
 
     loadProducts();
   }
 
-  // ✅ DELETE PRODUCT
-  Future<void> deleteProduct(int id) async {
+  Future<void> deleteProduct(
+      int id) async {
     await service.deleteProduct(id);
 
     loadProducts();
   }
 
-  // ✅ EDIT PRODUCT
-  Future<void> editProduct(Product oldProduct) async {
+  Future<void> editProduct(
+      Product oldProduct) async {
     final nameController =
-        TextEditingController(text: oldProduct.name);
+        TextEditingController(
+      text: oldProduct.name,
+    );
 
     final categoryController =
         TextEditingController(
-            text: oldProduct.category);
+      text: oldProduct.category,
+    );
 
     final expiryController =
         TextEditingController(
-            text: oldProduct.expiryDate);
+      text: oldProduct.expiryDate,
+    );
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text("Edit Product"),
-          content: SingleChildScrollView(
+          title: const Text(
+            "Edit Product",
+          ),
+          content:
+              SingleChildScrollView(
             child: Column(
               children: [
                 TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: "Product Name",
+                  controller:
+                      nameController,
+                  decoration:
+                      const InputDecoration(
+                    labelText:
+                        "Product Name",
                   ),
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(
+                  height: 10,
+                ),
 
                 TextField(
-                  controller: categoryController,
-                  decoration: const InputDecoration(
-                    labelText: "Category",
+                  controller:
+                      categoryController,
+                  decoration:
+                      const InputDecoration(
+                    labelText:
+                        "Category",
                   ),
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(
+                  height: 10,
+                ),
 
                 TextField(
-                  controller: expiryController,
-                  decoration: const InputDecoration(
-                    labelText: "Expiry Date",
+                  controller:
+                      expiryController,
+                  decoration:
+                      const InputDecoration(
+                    labelText:
+                        "Expiry Date",
                   ),
                 ),
               ],
@@ -164,28 +237,42 @@ class _HomeScreenState extends State<HomeScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(
+                    context);
               },
-              child: const Text("Cancel"),
+              child: const Text(
+                "Cancel",
+              ),
             ),
 
             ElevatedButton(
               onPressed: () async {
-                final updatedProduct = Product(
+                final updatedProduct =
+                    Product(
                   id: oldProduct.id,
-                  name: nameController.text,
-                  category: categoryController.text,
-                  expiryDate: expiryController.text,
+                  name:
+                      nameController
+                          .text,
+                  category:
+                      categoryController
+                          .text,
+                  expiryDate:
+                      expiryController
+                          .text,
                 );
 
-                await service.updateProduct(
-                    updatedProduct);
+                await service
+                    .updateProduct(
+                  updatedProduct,
+                );
 
-                Navigator.pop(context);
+                Navigator.pop(
+                    context);
 
                 loadProducts();
               },
-              child: const Text("Save"),
+              child:
+                  const Text("Save"),
             ),
           ],
         );
@@ -193,13 +280,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ✅ SEARCH FILTER
   void filterProducts() {
     String query =
-        searchController.text.toLowerCase();
+        searchController.text
+            .toLowerCase();
 
     setState(() {
-      filteredProducts = products.where((p) {
+      filteredProducts =
+          products.where((p) {
         return p.name
                 .toLowerCase()
                 .contains(query) ||
@@ -210,9 +298,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // ✅ LOGOUT
   Future<void> logout() async {
-    await Supabase.instance.client.auth.signOut();
+    await Supabase.instance.client.auth
+        .signOut();
 
     if (!mounted) return;
 
@@ -228,13 +316,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton:
-          FloatingActionButton(
+      floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.deepPurple,
         child: const Icon(Icons.add),
         onPressed: () async {
-          final result =
-              await Navigator.push(
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) =>
@@ -247,6 +333,7 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         },
       ),
+
       body: Stack(
         children: [
           // 🌄 BACKGROUND
@@ -269,22 +356,19 @@ class _HomeScreenState extends State<HomeScreen> {
           // 📱 UI
           SafeArea(
             child: Padding(
-              padding:
-                  const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
                   // 🔝 HEADER
                   Row(
                     mainAxisAlignment:
-                        MainAxisAlignment
-                            .spaceBetween,
+                        MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
                         "Expiry Tracker",
                         style: TextStyle(
                           fontSize: 26,
-                          fontWeight:
-                              FontWeight.bold,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
 
@@ -292,24 +376,22 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           IconButton(
                             onPressed:
-                                widget
-                                    .toggleTheme,
+                                widget.toggleTheme,
                             icon: Icon(
                               widget.isDark
-                                  ? Icons
-                                      .light_mode
-                                  : Icons
-                                      .dark_mode,
+                                  ? Icons.light_mode
+                                  : Icons.dark_mode,
                             ),
                           ),
 
                           IconButton(
                             onPressed: logout,
                             icon: const Icon(
-                                Icons.logout),
+                              Icons.logout,
+                            ),
                           ),
                         ],
-                      )
+                      ),
                     ],
                   ),
 
@@ -319,44 +401,36 @@ class _HomeScreenState extends State<HomeScreen> {
                   Container(
                     padding:
                         const EdgeInsets.symmetric(
-                            horizontal: 15),
+                      horizontal: 15,
+                    ),
                     decoration: BoxDecoration(
-                      color: Colors.white
-                          .withOpacity(0.2),
+                      color: Colors.white.withOpacity(
+                        0.2,
+                      ),
                       borderRadius:
-                          BorderRadius.circular(
-                              18),
+                          BorderRadius.circular(18),
                     ),
                     child: TextField(
-                      controller:
-                          searchController,
+                      controller: searchController,
                       style: TextStyle(
                         color: widget.isDark
                             ? Colors.white
                             : Colors.black,
                       ),
-                      decoration:
-                          InputDecoration(
-                        border:
-                            InputBorder.none,
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
                         hintText:
                             "Search products...",
                         hintStyle: TextStyle(
-                          color:
-                              widget.isDark
-                                  ? Colors
-                                      .white70
-                                  : Colors
-                                      .black54,
+                          color: widget.isDark
+                              ? Colors.white70
+                              : Colors.black54,
                         ),
                         icon: Icon(
                           Icons.search,
-                          color:
-                              widget.isDark
-                                  ? Colors
-                                      .white
-                                  : Colors
-                                      .black,
+                          color: widget.isDark
+                              ? Colors.white
+                              : Colors.black,
                         ),
                       ),
                     ),
@@ -366,18 +440,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // 📊 INFO CARD
                   AnimatedContainer(
-                    duration:
-                        const Duration(
-                            milliseconds:
-                                500),
+                    duration: const Duration(
+                      milliseconds: 500,
+                    ),
                     width: double.infinity,
                     padding:
-                        const EdgeInsets.all(
-                            20),
+                        const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       borderRadius:
-                          BorderRadius.circular(
-                              25),
+                          BorderRadius.circular(25),
                       gradient:
                           const LinearGradient(
                         colors: [
@@ -394,8 +465,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: Colors.white,
                         ),
 
-                        const SizedBox(
-                            width: 15),
+                        const SizedBox(width: 15),
 
                         Column(
                           crossAxisAlignment:
@@ -406,8 +476,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               "Tracked Products",
                               style: TextStyle(
                                 fontSize: 18,
-                                color: Colors
-                                    .white70,
+                                color:
+                                    Colors.white70,
                               ),
                             ),
 
@@ -417,12 +487,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   const TextStyle(
                                 fontSize: 28,
                                 fontWeight:
-                                    FontWeight
-                                        .bold,
+                                    FontWeight.bold,
                               ),
                             ),
                           ],
-                        )
+                        ),
                       ],
                     ),
                   ),
@@ -431,158 +500,168 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // 📦 PRODUCT LIST
                   Expanded(
-                    child:
-                        filteredProducts
-                                .isEmpty
-                            ? const Center(
-                                child: Text(
-                                  "No products found",
-                                  style:
-                                      TextStyle(
-                                    fontSize:
-                                        18,
+                    child: filteredProducts.isEmpty
+                        ? const Center(
+                            child: Text(
+                              "No products found",
+                              style: TextStyle(
+                                fontSize: 18,
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount:
+                                filteredProducts.length,
+                            itemBuilder:
+                                (context, index) {
+                              final p =
+                                  filteredProducts[index];
+
+                              final statusColor =
+                                  getExpiryColor(
+                                      p.expiryDate);
+
+                              final statusText =
+                                  getExpiryStatus(
+                                      p.expiryDate);
+
+                              return Container(
+                                margin:
+                                    const EdgeInsets.only(
+                                  bottom: 15,
+                                ),
+                                padding:
+                                    const EdgeInsets.all(
+                                  16,
+                                ),
+                                decoration:
+                                    BoxDecoration(
+                                  color: statusColor
+                                      .withOpacity(
+                                    0.15,
+                                  ),
+                                  borderRadius:
+                                      BorderRadius
+                                          .circular(20),
+                                  border: Border.all(
+                                    color: statusColor,
+                                    width: 2,
                                   ),
                                 ),
-                              )
-                            : ListView.builder(
-                                itemCount:
-                                    filteredProducts
-                                        .length,
-                                itemBuilder:
-                                    (context,
-                                        index) {
-                                  final p =
-                                      filteredProducts[
-                                          index];
-
-                                  return Container(
-                                    margin:
-                                        const EdgeInsets
-                                            .only(
-                                            bottom:
-                                                15),
-                                    padding:
-                                        const EdgeInsets
-                                            .all(16),
-                                    decoration:
-                                        BoxDecoration(
-                                      color: Colors
-                                          .white
-                                          .withOpacity(
-                                              0.18),
-                                      borderRadius:
-                                          BorderRadius.circular(
-                                              20),
-                                      border:
-                                          Border.all(
+                                child: Row(
+                                  children: [
+                                    // 📦 ICON
+                                    Container(
+                                      padding:
+                                          const EdgeInsets
+                                              .all(12),
+                                      decoration:
+                                          BoxDecoration(
                                         color: Colors
-                                            .white24,
+                                            .deepPurple
+                                            .withOpacity(
+                                          0.3,
+                                        ),
+                                        borderRadius:
+                                            BorderRadius
+                                                .circular(
+                                          15,
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        Icons.inventory,
+                                        size: 30,
                                       ),
                                     ),
-                                    child: Row(
-                                      children: [
-                                        // 📦 ICON
-                                        Container(
-                                          padding:
-                                              const EdgeInsets
-                                                  .all(
-                                                  12),
-                                          decoration:
-                                              BoxDecoration(
-                                            color: Colors
-                                                .deepPurple
-                                                .withOpacity(
-                                                    0.3),
-                                            borderRadius:
-                                                BorderRadius.circular(
-                                                    15),
-                                          ),
-                                          child:
-                                              const Icon(
-                                            Icons
-                                                .inventory,
-                                            size: 30,
-                                          ),
-                                        ),
 
-                                        const SizedBox(
-                                            width:
-                                                15),
-
-                                        // 📄 INFO
-                                        Expanded(
-                                          child:
-                                              Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment
-                                                    .start,
-                                            children: [
-                                              Text(
-                                                p.name,
-                                                style:
-                                                    const TextStyle(
-                                                  fontSize:
-                                                      18,
-                                                  fontWeight:
-                                                      FontWeight.bold,
-                                                ),
-                                              ),
-
-                                              const SizedBox(
-                                                  height:
-                                                      5),
-
-                                              Text(
-                                                  p.category),
-
-                                              const SizedBox(
-                                                  height:
-                                                      5),
-
-                                              Text(
-                                                "Expiry: ${p.expiryDate}",
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-
-                                        // ✏ EDIT
-                                        IconButton(
-                                          onPressed:
-                                              () {
-                                            editProduct(
-                                                p);
-                                          },
-                                          icon:
-                                              const Icon(
-                                            Icons
-                                                .edit,
-                                            color: Colors
-                                                .blue,
-                                          ),
-                                        ),
-
-                                        // 🗑 DELETE
-                                        IconButton(
-                                          onPressed:
-                                              () {
-                                            deleteProduct(
-                                                p.id!);
-                                          },
-                                          icon:
-                                              const Icon(
-                                            Icons
-                                                .delete,
-                                            color: Colors
-                                                .redAccent,
-                                          ),
-                                        ),
-                                      ],
+                                    const SizedBox(
+                                      width: 15,
                                     ),
-                                  );
-                                },
-                              ),
-                  )
+
+                                    // 📄 INFO
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment
+                                                .start,
+                                        children: [
+                                          Text(
+                                            p.name,
+                                            style:
+                                                const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight:
+                                                  FontWeight
+                                                      .bold,
+                                            ),
+                                          ),
+
+                                          const SizedBox(
+                                            height: 5,
+                                          ),
+
+                                          Text(
+                                            p.category,
+                                          ),
+
+                                          const SizedBox(
+                                            height: 5,
+                                          ),
+
+                                          Text(
+                                            "Expiry: ${p.expiryDate}",
+                                          ),
+
+                                          const SizedBox(
+                                            height: 5,
+                                          ),
+
+                                          Text(
+                                            statusText,
+                                            style:
+                                                TextStyle(
+                                              color:
+                                                  statusColor,
+                                              fontWeight:
+                                                  FontWeight
+                                                      .bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    // ✏ EDIT
+                                    IconButton(
+                                      onPressed: () {
+                                        editProduct(p);
+                                      },
+                                      icon: const Icon(
+                                        Icons.edit,
+                                        color:
+                                            Colors.blue,
+                                      ),
+                                    ),
+
+                                    // 🗑 DELETE
+                                    IconButton(
+                                      onPressed: () {
+                                        deleteProduct(
+                                          p.id!,
+                                        );
+                                      },
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: Colors
+                                            .redAccent,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                  ),
                 ],
               ),
             ),
