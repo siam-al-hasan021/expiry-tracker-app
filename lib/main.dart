@@ -339,7 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // 🌄 BACKGROUND
           Positioned.fill(
             child: Image.asset(
-              'assets/images/bg.jpg',
+              'assets/images/expn3.png',
               fit: BoxFit.cover,
             ),
           ),

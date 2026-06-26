@@ -74,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // 🌄 Background Image
           Positioned.fill(
             child: Image.asset(
-              'assets/images/bg.jpg',
+              'assets/images/expn3.png',
               fit: BoxFit.cover,
             ),
           ),
@@ -82,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // 🌑 Dark Overlay
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.7),
+              color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.7),
             ),
           ),
 
@@ -103,9 +103,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(
-                        Icons.lock,
+                        Icons.punch_clock,
                         size: 70,
-                        color: Colors.white,
+                        color: Colors.blue,
                       ),
 
                       const SizedBox(height: 20),
@@ -194,7 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                         child: Text(
                           isLogin
-                              ? "Create new account"
+                              ? "Create A New Account"
                               : "Already have an account?",
                         ),
                       )
