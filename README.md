@@ -6,6 +6,14 @@ This project provides a smart reminder-based
 solution.
 <img width="1024" height="1024" alt="EEEE" src="https://github.com/user-attachments/assets/f353c66a-201c-4b1a-8471-0d24f331741a" />
 
+<img width="720" height="1600" alt="image" src="https://github.com/user-attachments/assets/825f9b27-716a-481c-9ff1-32b81d322558" />
+<img width="720" height="1600" alt="image" src="https://github.com/user-attachments/assets/270b0b3d-cf52-4a8d-b786-8f833b1e573b" />
+<img width="720" height="1600" alt="image" src="https://github.com/user-attachments/assets/2d7e0ce4-96c9-40ce-8f68-79203f19b374" />
+
+
+
+
+
 
 
 
