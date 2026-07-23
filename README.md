@@ -5,28 +5,28 @@
   *A smart reminder-based solution to reduce waste and improve safety.*
 </div>
 
----
 
-## 📖 Introduction
+
+ Introduction
 
 People often forget product expiry dates. Expired food or medicine can cause severe health risks, and as a result, many products are wasted unnecessarily. The **Expiry Tracker Mobile Application** provides a smart, centralized solution to track expiration dates, receive timely reminder notifications, manage daily products easily, and ultimately reduce waste.
 
-### ⚠️ Problem Statement
+ Problem Statement
 *   **Difficult to remember:** Manually keeping track of various product expiry dates is challenging.
 *   **Inconvenient:** Manual checking of pantries and medicine cabinets is tedious.
 *   **Health Risks:** Consuming expired products creates significant health hazards.
 *   **Lack of Centralization:** No existing centralized tracking system for everyday items.
 
-### 💡 Proposed Solution
+Proposed Solution
 The application acts as a personal inventory manager that will:
 1.  Store product information securely.
 2.  Monitor expiry dates automatically.
 3.  Display products that are close to expiration on a user-friendly dashboard.
 4.  Send automatic reminder notifications before products expire.
 
----
 
-## ✨ Key Features
+
+ Key Features
 *   **User Authentication:** Secure sign-up and login functionalities.
 *   **Product Management:** Easily Add, Edit, or Delete products.
 *   **Expiry Notifications:** Automated warning notifications for expiring items.
@@ -34,9 +34,9 @@ The application acts as a personal inventory manager that will:
 *   **Expiring Items Dashboard:** A quick-glance view of products nearing their end date.
 *   **Cloud Data Storage:** Secure, real-time data syncing.
 
----
 
-## 🛠️ Technology Stack
+
+Technology Stack
 
 | Category | Technologies |
 | :--- | :--- |
@@ -44,9 +44,7 @@ The application acts as a personal inventory manager that will:
 | **Backend** | Supabase (Authentication, Storage, API), Python |
 | **Tools & Version Control** | VS Code, GitHub |
 
----
-
-## ⚙️ Methodology & Workflow
+⚙️ Methodology & Workflow
 
 The application workflow follows these straightforward steps:
 1. User logs into the app.
@@ -59,9 +57,8 @@ The application workflow follows these straightforward steps:
   <img width="700" alt="Methodology Flowchart" src="https://github.com/user-attachments/assets/5d911c48-3b71-4ca3-af24-eb5803b3ee09" />
 </div>
 
----
 
-## 🔄 SDLC Model: Agile
+🔄 SDLC Model: Agile
 
 **Reason:** The application was developed incrementally. Features were added, tested, and improved through multiple iterations based on changing requirements and continuous feedback.
 
@@ -69,9 +66,10 @@ The application workflow follows these straightforward steps:
   <img width="700" alt="Agile SDLC Diagram" src="https://github.com/user-attachments/assets/afe2fff9-3e7c-4499-958c-735b7a2eae98" />
 </div>
 
----
 
-## 📊 System Architecture & Diagrams
+
+
+📊 System Architecture & Diagrams
 
 ### Entity Relationship (ER) Diagram
 The Entity Relationship diagram represents the database structure of the Expiry Tracker Mobile Application. It consists of two main entities: **User** and **Product**. 
