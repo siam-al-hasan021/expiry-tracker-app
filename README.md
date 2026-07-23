@@ -40,7 +40,7 @@ Technology Stack
 
 | Category | Technologies |
 | :--- | :--- |
-| **Frontend** | Flutter (Dart), HTML, CSS, JavaScript |
+| **Frontend** | Flutter (Dart), JavaScript |
 | **Backend** | Supabase (Authentication, Storage, API), Python |
 | **Tools & Version Control** | VS Code, GitHub |
 
