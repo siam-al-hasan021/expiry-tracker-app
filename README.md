@@ -23,6 +23,7 @@ Receive reminder notifications
 Manage daily products easily
 Reduce waste and improve safety
 
+<img width="720" height="1600" alt="image" src="https://github.com/user-attachments/assets/847a1e42-493b-4a5f-969f-94e8b1978cea" />
 
 
 
@@ -31,6 +32,9 @@ Difficult to remember expiry dates
 Manual checking is inconvenient
 Expired products create health risks
 No centralized tracking system exists
+
+
+<img width="720" height="1600" alt="image" src="https://github.com/user-attachments/assets/8091d9aa-9a6b-4712-ac48-a31c13246cb1" />
 
 
 
@@ -43,6 +47,9 @@ Send reminder notifications
 Display products close to expiration
 
 
+<img width="720" height="1600" alt="image" src="https://github.com/user-attachments/assets/becc0bc0-7c36-433b-80b1-a90243b15f4e" />
+
+<img width="720" height="1600" alt="image" src="https://github.com/user-attachments/assets/257228a0-ff8b-4478-8576-8372cd622acd" />
 
 
 
@@ -53,6 +60,9 @@ Expiry Notifications
 Product Categories
 Dashboard for Expiring Items
 Cloud Data Storage
+
+
+
 
 
 
@@ -68,6 +78,11 @@ Methodology:
 4. System tracks expiry dates
 
 5. Notifications sent automatically
+
+<img width="946" height="1038" alt="image" src="https://github.com/user-attachments/assets/5d911c48-3b71-4ca3-af24-eb5803b3ee09" />
+
+
+
 
 
 
